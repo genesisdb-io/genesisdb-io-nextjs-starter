@@ -23,6 +23,8 @@ import { Client } from "genesisdb";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
+
 export default async function GenesisDBDemo() {
 
   const client = new Client();
