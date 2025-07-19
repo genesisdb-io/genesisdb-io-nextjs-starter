@@ -48,7 +48,7 @@ The Docker Compose file includes Genesis DB with the following configuration:
 ├── app/                 # Next.js App Router
 ├── components/          # React components
 │   └── ui/             # shadcn/ui components
-├── lib/                # Utilities and database client
+├── lib/                # Utilities, cqrs commands and event projections
 ├── docker-compose.yml   # Genesis DB setup
 └── package.json
 ```
