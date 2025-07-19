@@ -6,7 +6,9 @@
   "installCommand": "npm install",
   "regions": ["iad1"],
   "env": {
-    "GENESISDB_AUTH_TOKEN": "@genesisdb-auth-token",
-    "NEXT_PUBLIC_GENESISDB_URL": "@genesisdb-url"
+    "GENESISDB_API_URL": "http://localhost:8080",
+    "GENESISDB_AUTH_TOKEN": "secret",
+    "GENESISDB_API_VERSION": "v1",
+    "GENESISDB_SOURCE": "tag:demo.genesisdb.io"
   }
 }
