@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  genesisdb:
+    image: genesisdb/genesisdb:latest
+    container_name: genesisdb
+    environment:
+      - GENESISDB_AUTH_TOKEN=secret
+      - GENESISDB_TZ=Europe/Vienna
+    ports:
+      - "8080:8080"
+    volumes:
+      - genesisdb-data:/data
+    restart: unless-stopped
+
+volumes:
+  genesisdb-data:

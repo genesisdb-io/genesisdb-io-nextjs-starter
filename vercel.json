@@ -1,0 +1,12 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "regions": ["iad1"],
+  "env": {
+    "GENESISDB_AUTH_TOKEN": "@genesisdb-auth-token",
+    "NEXT_PUBLIC_GENESISDB_URL": "@genesisdb-url"
+  }
+}
