@@ -50,8 +50,8 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
       })
     }
 
-    form.reset()
     router.refresh()
+    document.getElementById("sheet-close")?.click()
   }
 
   return (
