@@ -22,6 +22,8 @@ import RemoveDialog from "./remove-dialog";
 import { Client } from "genesisdb";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Events from "./events";
 
 export const dynamic = 'force-dynamic'
 
@@ -101,6 +103,18 @@ export default async function GenesisDBDemo() {
           ))}
         </TableBody>
       </Table>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Written events</CardTitle>
+          <CardDescription>
+            The events that have been written to Genesis DB.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Events customerEvents={customerEvents} />
+        </CardContent>
+      </Card>
     </main>
   </div>;
 }
