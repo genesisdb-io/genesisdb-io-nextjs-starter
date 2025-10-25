@@ -1,6 +1,6 @@
-import { CloudEvent } from "cloudevents";
+import { RawEvent } from "cqrskit";
 
-export default function Events({ customerEvents }: { customerEvents: CloudEvent<unknown>[] }) {
+export default function Events({ customerEvents }: { customerEvents: RawEvent[] }) {
 
   if (!customerEvents || customerEvents.length === 0) {
     return <pre className="text-xs">No events written yet</pre>;

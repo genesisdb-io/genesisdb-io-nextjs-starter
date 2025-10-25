@@ -2,6 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -19,39 +20,45 @@ import { Customer } from "@/lib/interfaces"
 const customerFormSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50, "First name must be less than 50 characters"),
   lastName: z.string().min(1, "Last name is required").max(50, "Last name must be less than 50 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  emailAddress: z.string().email("Please enter a valid email address"),
 });
 
-export default function CustomerForm({ customer }: { customer?: Customer }) {
+export default function CustomerForm({ customer, onClose }: { customer?: Customer, onClose?: () => void }) {
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof customerFormSchema>>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
       firstName: customer?.firstName || "",
       lastName: customer?.lastName || "",
-      email: customer?.email || "",
+      emailAddress: customer?.emailAddress || "",
     }
   })
 
   const onSubmit = async (data: z.infer<typeof customerFormSchema>) => {
-    if (customer) {
-      await updateCustomer({
-        customerId: customer.id,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-      })
-    } else {
-      await createCustomer({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-      })
-    }
+    setIsSubmitting(true)
+    try {
+      if (customer) {
+        await updateCustomer({
+          customerId: customer.id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          emailAddress: data.emailAddress,
+        })
+      } else {
+        await createCustomer({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          emailAddress: data.emailAddress,
+        })
+      }
 
-    router.refresh()
-    document.getElementById("sheet-close")?.click()
+      router.refresh()
+      onClose?.()
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -94,7 +101,7 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
 
           <FormField
             control={form.control}
-            name="email"
+            name="emailAddress"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email *</FormLabel>
@@ -110,8 +117,8 @@ export default function CustomerForm({ customer }: { customer?: Customer }) {
             )}
           />
 
-          <Button type="submit">
-            Save
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </form>
       </Form>

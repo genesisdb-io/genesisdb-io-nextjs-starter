@@ -6,20 +6,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 import { Customer } from "@/lib/interfaces";
 import { CustomerProjection } from "@/lib/projections/customer-projection";
 import { Button } from "@/components/ui/button";
-import CustomerForm from "./customer-form";
+import CustomerSheet from "./customer-sheet";
 import RemoveDialog from "./remove-dialog";
-import { Client } from "genesisdb";
+import {
+  GenesisDBAdapter,
+  RawEvent
+} from "cqrskit";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,18 +24,60 @@ export const dynamic = 'force-dynamic'
 
 export default async function GenesisDBDemo() {
 
-  const client = new Client();
-  const customerEvents = await client.streamEvents("/customer")
-  const customers = new CustomerProjection().project(customerEvents)
+  // Use cqrskit's GenesisDBAdapter to stream events
+  const eventStore = new GenesisDBAdapter({
+    apiUrl: process.env.GENESISDB_API_URL || 'http://localhost:8080',
+    authToken: process.env.GENESISDB_AUTH_TOKEN || 'secret',
+    source: process.env.GENESISDB_SOURCE || 'tag:demo.genesisdb.io'
+  });
 
-  console.log(customerEvents);
+
+  // Create projection and rebuild from events
+  const projection = new CustomerProjection();
+  const customerEvents: RawEvent[] = [];
+
+  for await (const rawEvent of eventStore.streamEvents("/customer", {}, true)) {
+    customerEvents.push(rawEvent);
+
+    // Apply event to projection based on type (handle raw data directly)
+    try {
+      switch (rawEvent.type) {
+        case 'io.genesisdb.demo.customer-recorded':
+        case 'io.genesisdb.app.customer-added':
+          await projection.onCustomerRecorded(rawEvent.data, rawEvent.subject);
+          break;
+
+        case 'io.genesisdb.demo.customer-data-changed':
+        case 'io.genesisdb.app.customer-updated':
+        case 'io.genesisdb.app.customer-personaldata-changed':
+          await projection.onCustomerDataChanged(rawEvent.data, rawEvent.subject);
+          break;
+
+        case 'io.genesisdb.demo.customer-removed':
+        case 'io.genesisdb.app.customer-removed':
+          await projection.onCustomerRemoved(rawEvent.data, rawEvent.subject);
+          break;
+
+        default:
+          console.warn('Unknown event type:', rawEvent.type);
+      }
+    } catch (error) {
+      console.error('Error processing event:', rawEvent.type, error);
+    }
+  }
+
+  const customers = projection.getAllCustomers()
+
+  console.log('Total events:', customerEvents.length);
+  console.log('Total customers in projection:', customers.length);
+  console.log('Customers:', customers);
 
   return <div className="min-h-screen p-8 pb-20 sm:p-20">
     <main className="max-w-6xl mx-auto">
       <div className="text-center mb-16">
         <h1 className="text-4xl font-bold mb-4">Genesis DB Demo</h1>
         <p className="text-xl text-muted-foreground mb-8">
-          Welcome to the Genesis DB docs - your event sourcing sidekick. A database engine developed specifically for event sourcing. It handles the writing, reading, and watching of events with native precision - all while keeping consistency, reliability, and usability front and center. Whether you&apos;re just exploring event sourcing, comparing tools, or building a production-grade system.
+          Welcome to the Genesis DB - your event sourcing sidekick. A database engine developed specifically for event sourcing. It handles the writing, reading, and watching of events with native precision - all while keeping consistency, reliability, and usability front and center. Whether you&apos;re just exploring event sourcing, comparing tools, or building a production-grade system.
         </p>
       </div>
 
@@ -51,20 +88,7 @@ export default async function GenesisDBDemo() {
             Home
           </Link>
         </Button>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline">Add customer</Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Add new customer</SheetTitle>
-              <SheetDescription>
-                Add a new customer to the database.
-              </SheetDescription>
-            </SheetHeader>
-            <CustomerForm />
-          </SheetContent>
-        </Sheet>
+        <CustomerSheet />
       </div>
 
       <Table className="my-8">
@@ -81,22 +105,9 @@ export default async function GenesisDBDemo() {
             <TableRow key={customer.id}>
               <TableCell>{customer.firstName}</TableCell>
               <TableCell>{customer.lastName}</TableCell>
-              <TableCell>{customer.email}</TableCell>
+              <TableCell>{customer.emailAddress}</TableCell>
               <TableCell className="text-end flex flex-row justify-end gap-2">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline">Edit</Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Edit customer</SheetTitle>
-                      <SheetDescription>
-                        Edit the customer&apos;s data.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <CustomerForm customer={customer} />
-                  </SheetContent>
-                </Sheet>
+                <CustomerSheet customer={customer} />
                 <RemoveDialog customer={customer} />
               </TableCell>
             </TableRow>
